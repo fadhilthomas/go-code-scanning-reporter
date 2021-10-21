@@ -2,10 +2,9 @@ package model
 
 import (
 	"context"
-	"errors"
+	"github.com/fadhilthomas/go-code-scanning-reporter/config"
 	"github.com/jomei/notionapi"
-	"github.com/rs/zerolog/log"
-	"go-code-scanning-reporter/config"
+	"github.com/pkg/errors"
 	"strings"
 )
 
@@ -61,7 +60,6 @@ func QueryNotionVulnerabilityName(client *notionapi.Client, scanType string, rep
 
 	res, err := client.Database.Query(context.Background(), notionapi.DatabaseID(databaseId), databaseQueryRequest)
 	if err != nil {
-		log.Error().Str("file", "notion").Msg(err.Error())
 		return nil, errors.New(err.Error())
 	}
 	return res.Results, nil
@@ -89,7 +87,6 @@ func QueryNotionVulnerabilityStatus(client *notionapi.Client, repositoryName str
 	}
 	res, err := client.Database.Query(context.Background(), notionapi.DatabaseID(databaseId), databaseQueryRequest)
 	if err != nil {
-		log.Error().Str("file", "notion").Msg(err.Error())
 		return nil, errors.New(err.Error())
 	}
 	return res.Results, nil
@@ -134,7 +131,7 @@ func InsertNotionVulnerability(client *notionapi.Client, scanType string, reposi
 			detail: notionapi.NumberProperty{
 				Number: vulnerabilityDetail,
 			},
-			"Repository Name": notionapi.SelectProperty{
+			"Repository": notionapi.SelectProperty{
 				Select: notionapi.Option{
 					Name: repositoryName,
 				},
@@ -158,7 +155,6 @@ func InsertNotionVulnerability(client *notionapi.Client, scanType string, reposi
 
 	res, err := client.Page.Create(context.Background(), pageInsertQuery)
 	if err != nil {
-		log.Error().Str("file", "notion").Msg(err.Error())
 		return nil, errors.New(err.Error())
 	}
 	return res, nil
@@ -177,7 +173,6 @@ func UpdateNotionVulnerabilityStatus(client *notionapi.Client, pageId string, st
 
 	res, err := client.Page.Update(context.Background(), notionapi.PageID(pageId), pageUpdateQuery)
 	if err != nil {
-		log.Error().Str("file", "notion").Msg(err.Error())
 		return nil, errors.New(err.Error())
 	}
 	return res, nil

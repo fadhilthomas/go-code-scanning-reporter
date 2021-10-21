@@ -3,8 +3,8 @@ package model
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"net/http"
 	"time"
@@ -41,7 +41,7 @@ type SlackBlockFieldBody struct {
 func CreateBlockSummary(status SummaryReportStatus) (block SlackBlockBody) {
 	summaryField := SlackBlockFieldBody{
 		Type: "mrkdwn",
-		Text: fmt.Sprintf("> *Secure Code Scanning*, @here\n> *Repository Pull Request:* `%s`\n```Status      Count\n-------------------\nClose         %d\nOpen          %d\nNew           %d\n-------------------\nTotal         %d```", status.RepositoryPullRequest, status.Close, status.Open, status.New, status.Open+status.Close),
+		Text: fmt.Sprintf("> *Secure Code Scanning*, @here\n> *Scan Type:* `%s`\n> *Repository Pull Request:* `%s`\n```Status      Count\n-------------------\nClose         %d\nOpen          %d\nNew           %d\n-------------------\nTotal         %d```", status.ScanType, status.RepositoryPullRequest, status.Close, status.Open, status.New, status.Open+status.Close),
 	}
 
 	block = SlackBlockBody{
