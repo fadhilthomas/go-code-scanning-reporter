@@ -53,9 +53,9 @@ func CreateBlockSummary(status SummaryReportStatus) (block SlackBlockBody) {
 
 func SendSlackNotification(webHookURL string, blockList []SlackBlockBody) error {
 	slackMessage := SlackRequestBody{
-		Title:       "Secure Code Scanning",
-		Text:        "Secure Code Scanning",
-		Blocks:      blockList,
+		Title:  "Secure Code Scanning",
+		Text:   "Secure Code Scanning",
+		Blocks: blockList,
 	}
 
 	slackBody, err := json.Marshal(slackMessage)

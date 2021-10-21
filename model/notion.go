@@ -46,7 +46,7 @@ func QueryNotionVulnerabilityName(client *notionapi.Client, scanType string, rep
 				{
 					Property: detail,
 					Number: &notionapi.NumberFilterCondition{
-						Equals:               vulnerabilityDetail,
+						Equals: vulnerabilityDetail,
 					},
 				},
 				{

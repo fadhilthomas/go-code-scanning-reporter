@@ -5,21 +5,21 @@ import (
 	"encoding/json"
 	"github.com/jomei/notionapi"
 	"github.com/rs/zerolog/log"
-	"go-code-scanning-reporter/config"
-	"go-code-scanning-reporter/model"
+	"github.com/fadhilthomas/go-code-scanning-reporter/config"
+	"github.com/fadhilthomas/go-code-scanning-reporter/model"
 	"os"
 	"strconv"
 )
 
 var (
-	notionPageList           []notionapi.Page
-	notionDatabase           *notionapi.Client
-	summaryReportStatus model.SummaryReportStatus
-	scanSecretReport model.ScanSecret
-	scanDependencyGoReport model.ScanDependencyGo
-	scanDependencyJsReport model.ScanDependencyJs
-	scanDependencyPhpReport model.ScanDependencyPhp
-	scanSecurityStaticCodeCodeQlReport model.ScanSecurityStaticCodeCodeQl
+	notionPageList                      []notionapi.Page
+	notionDatabase                      *notionapi.Client
+	summaryReportStatus                 model.SummaryReportStatus
+	scanSecretReport                    model.ScanSecret
+	scanDependencyGoReport              model.ScanDependencyGo
+	scanDependencyJsReport              model.ScanDependencyJs
+	scanDependencyPhpReport             model.ScanDependencyPhp
+	scanSecurityStaticCodeCodeQlReport  model.ScanSecurityStaticCodeCodeQl
 	scanSecurityStaticCodeSemgrepReport model.ScanSecurityStaticCodeSemgrep
 )
 
@@ -189,7 +189,7 @@ func main() {
 			summaryReportStatus.Open = len(vulnerabilityList)
 
 			// find all close entries in repository
-			notionQueryStatusResult, err = model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName,"close")
+			notionQueryStatusResult, err = model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName, "close")
 			if err != nil {
 				log.Error().Str("file", "main").Err(err)
 				return
