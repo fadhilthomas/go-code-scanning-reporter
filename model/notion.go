@@ -19,7 +19,7 @@ func QueryNotionVulnerabilityName(client *notionapi.Client, scanType string, rep
 
 	var path string
 	var detail string
-	if strings.Contains(scanType, "dependency-scanning") {
+	if strings.Contains(scanType, "dependency") {
 		path = "Package"
 		detail = "CVSS Score"
 	} else {
@@ -97,7 +97,7 @@ func InsertNotionVulnerability(client *notionapi.Client, scanType string, reposi
 
 	var path string
 	var detail string
-	if strings.Contains(scanType, "dependency-scanning") {
+	if strings.Contains(scanType, "dependency") {
 		path = "Package"
 		detail = "CVSS Score"
 	} else {
