@@ -134,7 +134,9 @@ func main() {
 				vulnerability.Name = scanSecurityStaticCodeCodeQlDetail.RuleID
 				vulnerability.Path = scanSecurityStaticCodeCodeQlDetail.Locations[0].PhysicalLocation.ArtifactLocation.URI
 				vulnerability.Detail = float64(scanSecurityStaticCodeCodeQlDetail.Locations[0].PhysicalLocation.Region.StartLine)
-				vulnerabilityList = append(vulnerabilityList, vulnerability)
+				if vulnerability.Name != "go/hardcoded-credentials" {
+					vulnerabilityList = append(vulnerabilityList, vulnerability)
+				}
 			}
 		}
 	case scanType == "scan-security-static-code-semgrep":
