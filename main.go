@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/fadhilthomas/go-code-scanning-reporter/config"
 	"github.com/fadhilthomas/go-code-scanning-reporter/model"
 	"github.com/jomei/notionapi"
@@ -11,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -194,7 +196,7 @@ func main() {
 		}
 		summaryReportStatus.Close = len(notionQueryStatusResult)
 	}
-	summaryReportStatus.RepositoryPullRequest = repositoryPullRequest
+	summaryReportStatus.RepositoryPullRequest = fmt.Sprintf("%s%s", repositoryName, strings.ReplaceAll(repositoryPullRequest, "refs", ""))
 	summaryReportStatus.ScanType = scanType
 
 	if summaryReportStatus.New == 0 {
