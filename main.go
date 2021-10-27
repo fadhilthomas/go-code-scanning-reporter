@@ -6,6 +6,7 @@ import (
 	"github.com/fadhilthomas/go-code-scanning-reporter/config"
 	"github.com/fadhilthomas/go-code-scanning-reporter/model"
 	"github.com/jomei/notionapi"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"
@@ -45,21 +46,21 @@ func main() {
 	// find all open entries in repository
 	notionQueryStatusResult, err := model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName, "open")
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 		return
 	}
 	// set status to close for all entries in repository
 	for _, notionPage := range notionQueryStatusResult {
 		_, err = model.UpdateNotionVulnerabilityStatus(notionDatabase, notionPage.ID.String(), "close")
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 	}
 
 	fileReport, err := os.Open(config.GetStr(config.FILE_LOCATION))
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 		return
 	}
 
@@ -69,7 +70,7 @@ func main() {
 	case scanType == "scan-secret":
 		err = json.Unmarshal(byteValue, &scanSecretReport)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 		for _, scanSecret := range scanSecretReport {
@@ -82,7 +83,7 @@ func main() {
 	case scanType == "scan-dependency-go":
 		err = json.Unmarshal(byteValue, &scanDependencyGoReport)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 		for _, scanDependencyGo := range scanDependencyGoReport.Vulnerable {
@@ -97,7 +98,7 @@ func main() {
 	case scanType == "scan-dependency-js":
 		err = json.Unmarshal(byteValue, &scanDependencyJsReport)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 		for _, scanDependencyJs := range scanDependencyJsReport {
@@ -112,7 +113,7 @@ func main() {
 	case scanType == "scan-dependency-php":
 		err = json.Unmarshal(byteValue, &scanDependencyPhpReport)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 		for _, scanDependencyPhp := range scanDependencyPhpReport {
@@ -127,7 +128,7 @@ func main() {
 	case scanType == "scan-security-static-code-codeql":
 		err = json.Unmarshal(byteValue, &scanSecurityStaticCodeCodeQlReport)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 		for _, scanSecurityStaticCodeCodeQl := range scanSecurityStaticCodeCodeQlReport.Runs {
@@ -144,7 +145,7 @@ func main() {
 	case scanType == "scan-security-static-code-semgrep":
 		err = json.Unmarshal(byteValue, &scanSecurityStaticCodeSemgrepReport)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 		for _, scanSecurityStaticCodeSemgrep := range scanSecurityStaticCodeSemgrepReport {
@@ -161,7 +162,7 @@ func main() {
 		// search vuln in notion
 		notionQueryNameResult, err := model.QueryNotionVulnerabilityName(notionDatabase, scanType, repositoryName, vulnerability.Name, vulnerability.Path, vulnerability.Detail)
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 
@@ -169,7 +170,7 @@ func main() {
 		if len(notionQueryNameResult) == 0 {
 			_, err = model.InsertNotionVulnerability(notionDatabase, scanType, repositoryName, repositoryPullRequest, vulnerability.Name, vulnerability.Path, vulnerability.Detail)
 			if err != nil {
-				log.Error().Stack().Err(err).Msg("")
+				log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 				return
 			}
 			summaryReportStatus.New++
@@ -181,7 +182,7 @@ func main() {
 		for _, notionPage := range notionPageList {
 			_, err = model.UpdateNotionVulnerabilityStatus(notionDatabase, notionPage.ID.String(), "open")
 			if err != nil {
-				log.Error().Stack().Err(err).Msg("")
+				log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 				return
 			}
 		}
@@ -191,7 +192,7 @@ func main() {
 		// find all close entries in repository
 		notionQueryStatusResult, err = model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName, "close")
 		if err != nil {
-			log.Error().Stack().Err(err).Msg("")
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
 		summaryReportStatus.Close = len(notionQueryStatusResult)
@@ -207,7 +208,7 @@ func main() {
 	slackBlockList = append(slackBlockList, model.CreateBlockSummary(summaryReportStatus))
 	err = model.SendSlackNotification(slackToken, slackBlockList)
 	if err != nil {
-		log.Error().Stack().Err(err).Msg("")
+		log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 		return
 	}
 }
