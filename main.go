@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"
+	"go.uber.org/ratelimit"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -42,7 +43,10 @@ func main() {
 	scanType := config.GetStr(config.SCAN_TYPE)
 	slackToken := config.GetStr(config.SLACK_TOKEN)
 
+	rl := ratelimit.New(1)
+
 	notionDatabase = model.OpenNotionDB()
+	rl.Take()
 	// find all open entries in repository
 	notionQueryStatusResult, err := model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName, "open")
 	if err != nil {
@@ -51,6 +55,7 @@ func main() {
 	}
 	// set status to close for all entries in repository
 	for _, notionPage := range notionQueryStatusResult {
+		rl.Take()
 		_, err = model.UpdateNotionVulnerabilityStatus(notionDatabase, notionPage.ID.String(), "close")
 		if err != nil {
 			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
@@ -159,6 +164,7 @@ func main() {
 
 	// loop vuln struct
 	for _, vulnerability := range vulnerabilityList {
+		rl.Take()
 		// search vuln in notion
 		notionQueryNameResult, err := model.QueryNotionVulnerabilityName(notionDatabase, scanType, repositoryName, vulnerability.Name, vulnerability.Path, vulnerability.Detail)
 		if err != nil {
@@ -168,6 +174,7 @@ func main() {
 
 		// if no result, insert vuln to notion. if not append the notion page list
 		if len(notionQueryNameResult) == 0 {
+			rl.Take()
 			_, err = model.InsertNotionVulnerability(notionDatabase, scanType, repositoryName, repositoryPullRequest, vulnerability.Name, vulnerability.Path, vulnerability.Detail)
 			if err != nil {
 				log.Error().Stack().Err(errors.New(err.Error())).Msg("")
@@ -180,6 +187,7 @@ func main() {
 
 		// loop notion page list, set status to open
 		for _, notionPage := range notionPageList {
+			rl.Take()
 			_, err = model.UpdateNotionVulnerabilityStatus(notionDatabase, notionPage.ID.String(), "open")
 			if err != nil {
 				log.Error().Stack().Err(errors.New(err.Error())).Msg("")
@@ -188,7 +196,8 @@ func main() {
 		}
 
 		summaryReportStatus.Open = len(vulnerabilityList)
-
+		
+		rl.Take()
 		// find all close entries in repository
 		notionQueryStatusResult, err = model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName, "close")
 		if err != nil {
