@@ -158,7 +158,9 @@ func main() {
 			vulnerability.Name = scanSecurityStaticCodeSemgrep.CheckID
 			vulnerability.Path = scanSecurityStaticCodeSemgrep.Path
 			vulnerability.Detail = float64(scanSecurityStaticCodeSemgrep.Line)
-			vulnerabilityList = append(vulnerabilityList, vulnerability)
+			if scanSecurityStaticCodeSemgrep.Metadata.Category == "security" {
+				vulnerabilityList = append(vulnerabilityList, vulnerability)
+			}
 		}
 	}
 
@@ -196,7 +198,7 @@ func main() {
 		}
 
 		summaryReportStatus.Open = len(vulnerabilityList)
-		
+
 		rl.Take()
 		// find all close entries in repository
 		notionQueryStatusResult, err = model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName, "close")
