@@ -208,7 +208,7 @@ func main() {
 		}
 		summaryReportStatus.Close = len(notionQueryStatusResult)
 	}
-	summaryReportStatus.RepositoryPullRequest = fmt.Sprintf("%s%s", repositoryName, strings.ReplaceAll(repositoryPullRequest, "refs", ""))
+	summaryReportStatus.RepositoryPullRequest = fmt.Sprintf("https://github.com/payfazz/%s%s", repositoryName, strings.ReplaceAll(strings.ReplaceAll(repositoryPullRequest, "refs", ""),"/merge",""))
 	summaryReportStatus.ScanType = scanType
 
 	if summaryReportStatus.New == 0 {
