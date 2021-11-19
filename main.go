@@ -164,7 +164,7 @@ func main() {
 	}
 
 	// loop vulnerability list
-	for _, vulnerability := range vulnerabilityList {
+	for _, vulnerability := range removeDuplicate(vulnerabilityList) {
 		rl.Take()
 		// search vuln in notion
 		notionQueryNameResult, err := model.QueryNotionVulnerabilityName(notionDatabase, scanType, repositoryName, vulnerability.Name, vulnerability.Path, vulnerability.Detail)
@@ -210,4 +210,20 @@ func main() {
 			return
 		}
 	}
+}
+
+func removeDuplicate(duplicate []model.Vulnerability) []model.Vulnerability {
+	var unique []model.Vulnerability
+	type key struct{ value1, value2, value3 string }
+	m := make(map[key]int)
+	for _, v := range duplicate {
+		k := key{v.Name, v.Path, fmt.Sprintf("%f", v.Detail)}
+		if i, ok := m[k]; ok {
+			unique[i] = v
+		} else {
+			m[k] = len(unique)
+			unique = append(unique, v)
+		}
+	}
+	return unique
 }
