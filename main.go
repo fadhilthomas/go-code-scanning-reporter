@@ -18,7 +18,6 @@ import (
 )
 
 var (
-	notionPageList                      []notionapi.Page
 	notionDatabase                      *notionapi.Client
 	summaryReportStatus                 model.SummaryReportStatus
 	scanSecretReport                    model.ScanSecret
@@ -42,7 +41,6 @@ func main() {
 	repositoryPullRequest := config.GetStr(config.REPOSITORY_PULL_REQUEST)
 	scanType := config.GetStr(config.SCAN_TYPE)
 	slackToken := config.GetStr(config.SLACK_TOKEN)
-
 	rl := ratelimit.New(1)
 
 	notionDatabase = model.OpenNotionDB()
@@ -61,6 +59,7 @@ func main() {
 			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
 			return
 		}
+		summaryReportStatus.Close++
 	}
 
 	fileReport, err := os.Open(config.GetStr(config.FILE_LOCATION))
@@ -164,7 +163,7 @@ func main() {
 		}
 	}
 
-	// loop vuln struct
+	// loop vulnerability list
 	for _, vulnerability := range vulnerabilityList {
 		rl.Take()
 		// search vuln in notion
@@ -174,8 +173,19 @@ func main() {
 			return
 		}
 
-		// if no result, insert vuln to notion. if not append the notion page list
-		if len(notionQueryNameResult) == 0 {
+		// if no result, insert vulnerability to notion. else update vulnerability status
+		if len(notionQueryNameResult) > 0 {
+			for _, notionPage := range notionQueryNameResult {
+				rl.Take()
+				_, err = model.UpdateNotionVulnerabilityStatus(notionDatabase, string(notionPage.ID), "open")
+				if err != nil {
+					log.Error().Stack().Err(errors.New(err.Error())).Msg("")
+					return
+				}
+				summaryReportStatus.Open++
+				summaryReportStatus.Close--
+			}
+		} else {
 			rl.Take()
 			_, err = model.InsertNotionVulnerability(notionDatabase, scanType, repositoryName, repositoryPullRequest, vulnerability.Name, vulnerability.Path, vulnerability.Detail)
 			if err != nil {
@@ -183,43 +193,21 @@ func main() {
 				return
 			}
 			summaryReportStatus.New++
-		} else {
-			notionPageList = append(notionPageList, notionQueryNameResult[0])
+			summaryReportStatus.Open++
 		}
-
-		// loop notion page list, set status to open
-		for _, notionPage := range notionPageList {
-			rl.Take()
-			_, err = model.UpdateNotionVulnerabilityStatus(notionDatabase, notionPage.ID.String(), "open")
-			if err != nil {
-				log.Error().Stack().Err(errors.New(err.Error())).Msg("")
-				return
-			}
-		}
-
-		summaryReportStatus.Open = len(vulnerabilityList)
-
-		rl.Take()
-		// find all close entries in repository
-		notionQueryStatusResult, err = model.QueryNotionVulnerabilityStatus(notionDatabase, repositoryName, "close")
-		if err != nil {
-			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
-			return
-		}
-		summaryReportStatus.Close = len(notionQueryStatusResult)
 	}
-	summaryReportStatus.RepositoryPullRequest = fmt.Sprintf("https://github.com/%s%s", repositoryName, strings.ReplaceAll(strings.ReplaceAll(repositoryPullRequest, "refs", ""),"/merge",""))
+	summaryReportStatus.RepositoryPullRequest = fmt.Sprintf("https://github.com/%s%s", repositoryName, strings.ReplaceAll(strings.ReplaceAll(repositoryPullRequest, "refs", ""), "/merge", ""))
 	summaryReportStatus.ScanType = scanType
 
 	if summaryReportStatus.New == 0 {
 		return
-	}
-
-	var slackBlockList []model.SlackBlockBody
-	slackBlockList = append(slackBlockList, model.CreateBlockSummary(summaryReportStatus))
-	err = model.SendSlackNotification(slackToken, slackBlockList)
-	if err != nil {
-		log.Error().Stack().Err(errors.New(err.Error())).Msg("")
-		return
+	} else {
+		var slackBlockList []model.SlackBlockBody
+		slackBlockList = append(slackBlockList, model.CreateBlockSummary(summaryReportStatus))
+		err = model.SendSlackNotification(slackToken, slackBlockList)
+		if err != nil {
+			log.Error().Stack().Err(errors.New(err.Error())).Msg("")
+			return
+		}
 	}
 }
