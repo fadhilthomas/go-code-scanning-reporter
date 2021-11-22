@@ -27,69 +27,88 @@ func QueryNotionVulnerabilityName(client *notionapi.Client, scanType string, rep
 		detail = "Line Number"
 	}
 
-	databaseQueryRequest := &notionapi.DatabaseQueryRequest{
-		CompoundFilter: &notionapi.CompoundFilter{
-			notionapi.FilterOperatorAND: []notionapi.PropertyFilter{
-				{
-					Property: "Name",
-					Text: &notionapi.TextFilterCondition{
-						Equals: vulnerabilityName,
+	var pageList []notionapi.Page
+	var cursor notionapi.Cursor
+	for hasMore := true; hasMore; {
+		databaseReq := &notionapi.DatabaseQueryRequest{
+			CompoundFilter: &notionapi.CompoundFilter{
+				notionapi.FilterOperatorAND: []notionapi.PropertyFilter{
+					{
+						Property: "Name",
+						Text: &notionapi.TextFilterCondition{
+							Equals: vulnerabilityName,
+						},
 					},
-				},
-				{
-					Property: path,
-					Text: &notionapi.TextFilterCondition{
-						Equals: vulnerabilityPath,
+					{
+						Property: path,
+						Text: &notionapi.TextFilterCondition{
+							Equals: vulnerabilityPath,
+						},
 					},
-				},
-				{
-					Property: detail,
-					Number: &notionapi.NumberFilterCondition{
-						Equals: vulnerabilityDetail,
+					{
+						Property: detail,
+						Number: &notionapi.NumberFilterCondition{
+							Equals: vulnerabilityDetail,
+						},
 					},
-				},
-				{
-					Property: "Repository",
-					Select: &notionapi.SelectFilterCondition{
-						Equals: repositoryName,
+					{
+						Property: "Repository",
+						Select: &notionapi.SelectFilterCondition{
+							Equals: repositoryName,
+						},
 					},
 				},
 			},
-		},
+			StartCursor: cursor,
+		}
+		resp, err := client.Database.Query(context.Background(), notionapi.DatabaseID(databaseId), databaseReq)
+		if err != nil {
+			return nil, errors.New(err.Error())
+		}
+		for _, page := range resp.Results {
+			pageList = append(pageList, page)
+		}
+		hasMore = resp.HasMore
+		cursor = resp.NextCursor
 	}
-
-	res, err := client.Database.Query(context.Background(), notionapi.DatabaseID(databaseId), databaseQueryRequest)
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-	return res.Results, nil
+	return pageList, nil
 }
 
 func QueryNotionVulnerabilityStatus(client *notionapi.Client, repositoryName string, vulnerabilityStatus string) (output []notionapi.Page, err error) {
 	databaseId := config.GetStr(config.NOTION_DATABASE)
-	databaseQueryRequest := &notionapi.DatabaseQueryRequest{
-		CompoundFilter: &notionapi.CompoundFilter{
-			notionapi.FilterOperatorAND: []notionapi.PropertyFilter{
-				{
-					Property: "Repository",
-					Select: &notionapi.SelectFilterCondition{
-						Equals: repositoryName,
+	var pageList []notionapi.Page
+	var cursor notionapi.Cursor
+	for hasMore := true; hasMore; {
+		databaseReq := &notionapi.DatabaseQueryRequest{
+			CompoundFilter: &notionapi.CompoundFilter{
+				notionapi.FilterOperatorAND: []notionapi.PropertyFilter{
+					{
+						Property: "Repository",
+						Select: &notionapi.SelectFilterCondition{
+							Equals: repositoryName,
+						},
 					},
-				},
-				{
-					Property: "Status",
-					Select: &notionapi.SelectFilterCondition{
-						Equals: vulnerabilityStatus,
+					{
+						Property: "Status",
+						Select: &notionapi.SelectFilterCondition{
+							Equals: vulnerabilityStatus,
+						},
 					},
 				},
 			},
-		},
+			StartCursor: cursor,
+		}
+		resp, err := client.Database.Query(context.Background(), notionapi.DatabaseID(databaseId), databaseReq)
+		if err != nil {
+			return nil, errors.New(err.Error())
+		}
+		for _, page := range resp.Results {
+			pageList = append(pageList, page)
+		}
+		hasMore = resp.HasMore
+		cursor = resp.NextCursor
 	}
-	res, err := client.Database.Query(context.Background(), notionapi.DatabaseID(databaseId), databaseQueryRequest)
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-	return res.Results, nil
+	return pageList, nil
 }
 
 func InsertNotionVulnerability(client *notionapi.Client, scanType string, repositoryName string, repositoryPullRequest string, vulnerabilityName string, vulnerabilityPath string, vulnerabilityDetail float64) (output *notionapi.Page, err error) {
