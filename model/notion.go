@@ -65,9 +65,7 @@ func QueryNotionVulnerabilityName(client *notionapi.Client, scanType string, rep
 		if err != nil {
 			return nil, errors.New(err.Error())
 		}
-		for _, page := range resp.Results {
-			pageList = append(pageList, page)
-		}
+		pageList = append(pageList, resp.Results...)
 		hasMore = resp.HasMore
 		cursor = resp.NextCursor
 	}
@@ -102,9 +100,7 @@ func QueryNotionVulnerabilityStatus(client *notionapi.Client, repositoryName str
 		if err != nil {
 			return nil, errors.New(err.Error())
 		}
-		for _, page := range resp.Results {
-			pageList = append(pageList, page)
-		}
+		pageList = append(pageList, resp.Results...)
 		hasMore = resp.HasMore
 		cursor = resp.NextCursor
 	}
